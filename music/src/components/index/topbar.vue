@@ -80,9 +80,7 @@ export default {
 }
 // 侧边栏过渡效果
 .overlay-enter-active,
-.sideBar-enter-active {
-  transition: all 1s;
-}
+.sideBar-enter-active,
 .overlay-leave-active,
 .sideBar-leave-active {
   transition: all 1s;
@@ -91,7 +89,8 @@ export default {
 .overlay-leave-to {
   opacity: 0;
 }
-.sideBar-enter {
+.sideBar-enter,
+.sideBar-leave-to {
   opacity: 0;
   transform: translateX(-100px);
 }
@@ -101,10 +100,6 @@ export default {
 .sideBar-enter-to {
   opacity: 1;
 }
-.sideBar-leave-to {
-  opacity: 0;
-  transform: translateX(-100px);
-}
 .overlay {
   position: fixed;
   top: 0;
@@ -112,7 +107,7 @@ export default {
   z-index: 2;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.5);
   div {
     position: relative;
     width: 15rem;

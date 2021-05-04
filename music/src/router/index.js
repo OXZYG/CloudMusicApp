@@ -12,7 +12,8 @@ Vue.use(VueRouter)
 export default new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes: [{
+  routes: [
+    {
       // 默认跳转到recommend
       path: '/',
       redirect: '/index'
@@ -21,7 +22,8 @@ export default new VueRouter({
       path: '/index',
       component: Index,
       redirect: '/recommend',
-      children: [{
+      children: [
+        {
           path: '/recommend',
           component: Recommend
         },

@@ -19,4 +19,9 @@ export default {
   }
 }
 </script>
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+// 默认z-index: 99
+/deep/.van-sticky--fixed {
+  z-index: 2;
+}
+</style>

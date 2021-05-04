@@ -3,11 +3,14 @@
     <keep-alive>
       <router-view></router-view>
     </keep-alive>
+    <playbar></playbar>
   </div>
 </template>
 
 <script>
+import playbar from './components/common/playbar.vue'
 export default {
+  components: { playbar },
   name: 'app'
 }
 </script>
@@ -18,8 +21,7 @@ body {
   #app {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC',
-      'Helvetica Neue', STHeiti, 'Microsoft Yahei', Tahoma, Simsun, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, STHeiTi, sans-serif;
     background-color: rgba(244, 244, 244, 0);
   }
 }
