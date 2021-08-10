@@ -1,17 +1,35 @@
 <template>
   <div>
     <div class="searchTop">
-      <van-icon name="arrow-left" size="20px" tag="div" @click="routeback" />
-      <van-search
-        v-model="keyword"
-        shape="round"
-        :placeholder="this.defaultKeyword"
-        background="rgb(212,68,57)"
+      <van-icon
+        class="flexCenter"
+        name="arrow-left"
+        size="20px"
         tag="div"
-        @search="onSearch"
-        @clear="clearSearch"
-      >
-      </van-search>
+        @click="routeback"
+      />
+      <div class="searchInput">
+        <van-search
+          v-model="keyword"
+          shape="round"
+          :placeholder="this.defaultKeyword"
+          background="rgb(212,68,57)"
+          tag="div"
+          @search="onSearch"
+          @clear="clearSearch"
+        >
+        </van-search>
+        <div class="suggest" v-show="this.suggest">
+          <div
+            class="suggestItem"
+            v-for="(item, index) in this.suggest"
+            :key="index"
+            @click="keySearch(item.keyword)"
+          >
+            {{ item.keyword }}
+          </div>
+        </div>
+      </div>
     </div>
     <div class="search">
       <div v-show="!showRes">
@@ -27,7 +45,7 @@
               <div>{{ item }}</div>
             </div>
           </div>
-          <div @click="clearHistory"><van-icon name="delete-o" /></div>
+          <div @click="clearHistory"><div class="mus-lajixiang"></div></div>
         </div>
         <div class="hot">
           <div class="hotTitle">热搜榜</div>
@@ -81,6 +99,7 @@
     </div>
     <van-action-sheet v-model="showAction" class="flexCenter">
       <div @click="download">下载</div>
+      <div @click="addPlaylist">添加到播放列表</div>
       <div>更多功能..</div>
     </van-action-sheet>
   </div>
@@ -92,6 +111,10 @@ export default {
     this.defaultSearch()
     this.hotSearch()
   },
+  mounted () {
+    // 触发搜索建议方法2：对搜索框添加一个监听函数
+    window.addEventListener('input', this.suggestSearch)
+  },
   data () {
     return {
       // 展示搜索结果
@@ -102,7 +125,6 @@ export default {
       hotSearchList: [],
       // 搜索关键词
       keyword: '',
-
       // 搜索结果数
       songCount: 0,
       // 每次搜索获取数目
@@ -110,7 +132,7 @@ export default {
       // 搜索偏移量
       offset: 0,
       // 搜索结果
-      songs: '',
+      songs: [],
       // 滚动搜索参数
       immdeCheck: false,
       loading: false,
@@ -118,7 +140,8 @@ export default {
       finishedText: '没有更多了~',
       musicUrl: '',
       showAction: false,
-      selectItem: {}
+      selectItem: {},
+      suggest: []
     }
   },
   computed: {
@@ -145,18 +168,42 @@ export default {
       const { data: res } = await this.$http.get('/search/default')
       this.defaultKeyword = res.data.realkeyword
     },
-    // 搜索按键
+    // 搜索建议，bug
+    // 1：手速过快先搜索了，先得到搜索结果，之后再触发此搜索，又得到搜索建议的结果；
+    // 2：清空搜索框后，收到清空之前的响应；
+    async suggestSearch () {
+      if (!this.keyword) return
+      const { data: res } = await this.$http.get(
+        `/search/suggest?keywords=${this.keyword}&type=mobile`
+      )
+      // 判断对象是否为空
+      if (
+        JSON.stringify(res.result) !== '{}' &&
+        typeof res.result !== 'undefined'
+      ) {
+        // 搜索建议bug解决方案：收到搜索建议的响应，再检查一下
+        // 1.是否已经得到搜索结果
+        // 2.是否搜索框为空
+        // 在方法1中仍然有bug，点击热搜/历史，进行搜索的时候，仍会先展示一下搜索建议
+        if (this.keyword === '' || this.songs.length !== 0) {
+        } else {
+          this.suggest = res.result.allMatch
+        }
+      }
+    },
+    // 普通搜索功能
     async onSearch () {
       // 重置偏移量
       this.offset = 0
       // 使用默认搜索关键词
       if (!this.keyword) this.keyword = this.defaultKeyword
-
       const { data: res } = await this.$http.get(
         `/search?keywords=${this.keyword}&limit=${this.limit}&offset=${this.offset}`
       )
       this.songs = res.result.songs
       this.songCount = res.result.songCount
+      // 清空已有的搜索建议
+      this.suggest = []
       // 添加进搜索历史
       this.$store.commit('addSearchHistory', this.keyword)
       // 先得到结果再展示
@@ -179,6 +226,7 @@ export default {
     // 清除搜索框
     clearSearch () {
       this.showRes = false
+      this.suggest = []
     },
     // 清楚搜索记录
     clearHistory () {
@@ -190,7 +238,7 @@ export default {
         `/search?keywords=${this.keyword}&limit=${this.limit}&offset=${this.offset}`
       )
       this.loading = false
-      // bug，没有更多歌曲时会拼接一个空的，要先检查是否有更多歌曲
+      // 已解决bug，没有更多歌曲时会拼接一个空的，要先检查是否有更多歌曲
       if (res.result.songs) {
         this.songs = this.songs.concat(res.result.songs)
       }
@@ -206,34 +254,35 @@ export default {
 
     // 播放音乐，获取音乐信息，并存储正在播放音乐信息
     async playMusic (item) {
-      // 音乐的试听片段信息和url信息
+      // 获取音乐的url信息(包含试听片段信息)和lrc歌词信息
       const playing = {}
       const { data: urlRes } = await this.$http.get(`/song/url?id=${item.id}`)
-      console.log(urlRes)
-      // 专辑封面信息，是否有专辑封面
+      const { data: lrcRes } = await this.$http.get(`/lyric?id=${item.id}`)
+      // 获取专辑封面信息，判断音乐信息中是否有专辑封面id
       if (item.album.id) {
         const { data: albumRes } = await this.$http.get(
           `/album?id=${item.album.id}`
         )
         playing.picUrl = albumRes.album.picUrl
       }
-      // 保存信息
-      playing.song = item
-      // 试听片段和Url
-      playing.urlInfo = urlRes.data[0]
-      // 是否是VIP音乐
-      if (playing.urlInfo.freeTrialInfo) {
-        this.$toast(`正在试听《${item.name}》片段，开通VIP畅听完整版`)
-      }
-      this.$store.commit('changeUrl', playing)
-      // 音乐是否有Url可进行播放
-      if (playing.urlInfo.url) {
-        // 播放音乐
-        this.$store.commit('playMusic')
-        // 添加进播放历史
+      // 注：播放音乐逻辑，小心bug
+      // 1、先检查音乐是否有Url可进行播放
+      if (urlRes.data[0].url) {
+        // 2、保存完整信息
+        playing.song = item
+        // Url信息（包含试听片段信息
+        playing.urlInfo = urlRes.data[0]
+        playing.lrcInfo = lrcRes
+        // 3、再检查是否是VIP音乐，即试听片段信息
+        if (playing.urlInfo.freeTrialInfo) {
+          this.$toast(`正在试听《${item.name}》片段，开通VIP畅听完整版`)
+        }
+        // 4、添加url播放音乐
+        this.$store.commit('changeUrl', playing)
+        // 5、添加进播放历史，待改
         this.$store.commit('addPlayHistory', playing)
       } else {
-        // 无音源报错
+        // 6、无音源报错
         this.$toast('因合作方要求，该资源暂时下架')
       }
     },
@@ -250,13 +299,27 @@ export default {
       const downloadInfo = {}
       downloadInfo.url = urlRes.data[0].url
       downloadInfo.name = this.selectItem.name
-      this.$store.commit('downloadMusic', downloadInfo)
+      this.$store.commit('download', downloadInfo)
+    },
+    // 添加进播放列表
+    addPlaylist () {
+      console.log('add')
+      this.$store.commit('addPlaylist', this.selectItem)
     }
   },
   watch: {
-    // 清除搜索框
-    keyword: function (newKey, oldKey) {
-      if (newKey === '') this.showRes = false
+    // 搜索框
+    keyword (newKey, oldKey) {
+      // 清空搜索框时，清除搜索结果
+      if (newKey === '') {
+        this.showRes = false
+        this.suggest = []
+        this.songs = []
+      }
+      // 触发搜索建议方法1：监听搜索框内容变化，当搜索框不为空，或者有变化时才触发
+      // if (newKey !== '' && newKey !== oldKey) {
+      //   this.suggestSearch(newKey)
+      // }
     }
   }
 }
@@ -283,17 +346,28 @@ export default {
   justify-content: space-between;
   align-items: center;
   background-color: rgb(212, 68, 57);
-  .van-icon {
+  .van-icon-arrow-left {
     width: 4vw;
     padding-left: 2vw;
     color: white;
   }
-  .van-search {
+  .searchInput {
+    position: relative;
     width: 94vw;
     flex: 1;
-  }
-  .van-icon-search::before {
-    content: '';
+    /deep/.van-icon-search::before {
+      content: '';
+    }
+    .suggest {
+      position: absolute;
+      background-color: white;
+      margin-left: -6vw;
+      width: 100vw;
+      .suggestItem {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+        padding: 1rem;
+      }
+    }
   }
 }
 

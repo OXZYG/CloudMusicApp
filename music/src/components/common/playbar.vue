@@ -1,35 +1,44 @@
 <template>
-  <van-tabbar>
-    <audio :src="playingSong.urlInfo.url" autoplay></audio>
-    <div class="songPic flexCenter" @click="detail">
-      <img :src="picUrl" />
-    </div>
-    <div class="songInfo flexCenter" @click="detail">
-      <div class="songName textOverflow">
-        {{ playingSong.name }}
+  <div v-show="showPlaybar">
+    <van-tabbar>
+      <audio :src="playingSong.urlInfo.url" autoplay ref></audio>
+      <div class="songPic flexCenter" @click="detail">
+        <img :src="picUrl" />
       </div>
-      <div class="artists textOverflow">
-        {{ playingSong.artists | artistName }}
+      <div class="songInfo flexCenter" @click="detail">
+        <div class="songName textOverflow">
+          {{ playingSong.name }}
+        </div>
+        <div class="artists textOverflow">
+          {{ playingSong.artists | artistName }}
+        </div>
       </div>
-    </div>
-    <div class="flexCenter" @click="playBtn">
-      <van-icon name="pause" v-show="!playOrpause" />
-      <van-icon name="play" v-show="playOrpause" />
-    </div>
-    <div class="playList flexCenter">
-      <div class="mus-bofangliebiao"></div>
-    </div>
-    <transition name="overlay">
-      <div class="overlay" v-show="showDetail">
-        <playdetail :showDetail="showDetail" @closeDetail="detail"></playdetail>
+      <div class="flexCenter" @click="playBtn">
+        <van-icon name="pause" v-show="!playOrpause" />
+        <van-icon name="play" v-show="playOrpause" />
       </div>
-    </transition>
-  </van-tabbar>
+      <div class="playList flexCenter">
+        <div class="mus-bofangliebiao"></div>
+      </div>
+      <transition name="overlay">
+        <div class="overlay" v-show="showDetail">
+          <playdetail
+            :showDetail="showDetail"
+            @closeDetail="detail"
+          ></playdetail>
+        </div>
+      </transition>
+    </van-tabbar>
+  </div>
 </template>
 <script>
 import playdetail from './playdetail.vue'
 export default {
   components: { playdetail },
+  mounted () {
+    // 监听歌曲播放完毕后，暂停
+    this.audioEnd()
+  },
   data () {
     return {
       // 播放页面
@@ -48,9 +57,16 @@ export default {
     },
     picUrl () {
       return this.playingSong.picUrl ? this.playingSong.picUrl : this.defPic
+    },
+    showPlaybar () {
+      return this.$store.state.showPlaybar
     }
   },
   methods: {
+    audioEnd () {
+      const audio = document.querySelector('audio')
+      audio.addEventListener('ended', this.playBtn, false)
+    },
     playBtn () {
       this.$store.commit('playBtn')
     },
@@ -132,7 +148,7 @@ export default {
   // 过渡效果
   .overlay-enter-active,
   .overlay-leave-active {
-    transition: all 1s;
+    transition: all 0.4s;
   }
   .overlay-enter,
   .overlay-leave-to {

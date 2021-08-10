@@ -16,14 +16,14 @@ for (const key in vfilters) {
 
 Vue.use(VueLazyload, {
   preLoad: 1.3,
-  loading: require('@/components/recommend/slide.png')
+  loading: require('@/components/index/recommend/slide.png')
   // error: require('@/components/recommend/slide.png')
 })
 Vue.config.productionTip = false
 
-// axios.defaults.baseURL = 'http://localhost:3000/'
-axios.defaults.baseURL = 'http://192.168.2.242:3000/'
-// axios.defaults.baseURL = 'http://192.168.221.143:3000/'
+axios.defaults.baseURL = 'http://localhost:3000/'
+// axios.defaults.baseURL = 'http://192.168.2.242:3000/'
+// axios.defaults.baseURL = 'http://192.168.76.143:3000/'
 Vue.prototype.$http = axios
 
 new Vue({

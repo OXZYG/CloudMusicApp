@@ -21,7 +21,7 @@
           class="recomdItem"
           v-for="value in this.recommendSongs"
           :key="value.id"
-          @click="selectItem(value)"
+          @click="listDetail(value)"
         >
           <img
             v-lazy="{
@@ -176,6 +176,9 @@ export default {
       banner: [],
       // 推荐歌单
       recommendSongs: [],
+      // 歌单详情
+      recommendSongsIds: [],
+      // 歌单歌曲详情
       recommendSongsDetail: [],
       // 推荐MV
       recommendMV: [],
@@ -226,19 +229,14 @@ export default {
         this.featuredNew = newSong.data.playlists
       }
     },
-    // 未完成
-    async selectItem (value) {
-      // 歌单详情
-      const res1 = await this.$http.get(`/playlist/detail?id=${value.id}`)
-      // 歌单详情动态
-      // const res2 = await this.$http.get(
-      //   `/playlist/detail/dynamic?id=${value.id}`
-      // )
-      // console.log(res)
-      this.recommendSongsDetail = res1.data
-      console.log(this.recommendSongsDetail)
-      // console.log(res2)
-      this.$toast('unfinished')
+    // 歌单详情
+    listDetail (value) {
+      this.$router.push({
+        path: '/playList',
+        query: {
+          id: value.id
+        }
+      })
     }
   }
 }

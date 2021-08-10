@@ -2,9 +2,11 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Index from '../components/index/index'
-import Recommend from '../components/recommend/recommend'
-import Rank from '../components/rank/rank'
-import Singer from '../components/singer/singer'
+import Login from '../components/Login/login'
+import Recommend from '../components/index/recommend/recommend'
+import Rank from '../components/index/rank/rank'
+import Singer from '../components/index/singer/singer'
+import Playlist from '../components/index/playlist/playlist'
 import Search from '../components/Search/search'
 
 Vue.use(VueRouter)
@@ -36,6 +38,14 @@ export default new VueRouter({
           component: Singer
         }
       ]
+    },
+    {
+      path: '/playlist',
+      component: Playlist
+    },
+    {
+      path: '/login',
+      component: Login
     },
     {
       path: '/search',
